@@ -3,12 +3,58 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SweetShop — Test</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <title>SweetShop — Authentic Sweets</title>
+  <meta name="description" content="SweetShop — Fresh mithai & sweets. Order online. Same-day delivery in city." />
+  <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <header><h1>SweetShop — Page Loaded ✅</h1></header>
-  <p>If you see this, HTML is loading fine.</p>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="logo">SweetShop</div>
+      <nav class="main-nav">
+        <a href="#products">Products</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <button id="cart-btn" class="btn">Cart (<span id="cart-count">0</span>)</button>
+      <button id="menu-toggle" class="hamburger" aria-label="menu">☰</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero container">
+      <div>
+        <h1>Authentic Sweets — Fresh Daily</h1>
+        <p>Order now — festival offers & same-day delivery in the city.</p>
+        <a href="#products" class="btn primary">Shop Sweets</a>
+      </div>
+      <img src="images/hero.jpg" alt="Sweets" class="hero-img" />
+    </section>
+
+    <section id="products" class="container products-grid">
+      <!-- JS will render product cards -->
+    </section>
+
+    <section id="about" class="container about">
+      <h2>About SweetShop</h2>
+      <p>Family recipes, fresh ingredients, and pure ghee — since 1999.</p>
+    </section>
+
+    <section id="contact" class="container contact">
+      <h2>Contact & Orders</h2>
+      <form id="contact-form">
+        <input type="text" name="name" placeholder="Your name" required />
+        <input type="tel" name="phone" placeholder="Phone" required />
+        <textarea name="message" placeholder="Message / order details"></textarea>
+        <button class="btn" type="submit">Send</button>
+      </form>
+    </section>
+  </main>
+
+  <footer class="site-footer container">
+    <p>© <span id="year"></span> SweetShop • Follow us on Instagram • Made with ❤</p>
+  </footer>
+
   <script src="js/script.js"></script>
 </body>
 </html>
