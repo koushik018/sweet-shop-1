@@ -184,3 +184,67 @@ document.addEventListener('DOMContentLoaded', ()=>{
   setupContact();
   setupCartBtn();
 });
+// ===== UI helpers: smooth scroll, active category highlight, header shrink =====
+(function(){
+  // smooth scroll for header nav and category links
+  document.querySelectorAll('.main-nav a, .category-bar a').forEach(a=>{
+    a.addEventListener('click', function(ev){
+      const href = this.getAttribute('href');
+      if(!href || !href.startsWith('#')) return;
+      ev.preventDefault();
+      const target = document.querySelector(href);
+      if(!target) return;
+      window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+    });
+  });
+
+  // build category bar dynamically (desktop + mobile)
+  const catBarWrap = document.createElement('div');
+  catBarWrap.className = 'category-bar';
+  catBarWrap.innerHTML = `<div class="container row">
+    <div class="row">
+      <a href="#sweets">Sweets</a>
+      <a href="#pickles">Pickles</a>
+      <a href="#fried">Fried</a>
+      <a href="#podi">Podi</a>
+    </div>
+  </div>`;
+  // insert after header
+  const header = document.querySelector('.site-header');
+  if(header && header.parentNode){
+    header.parentNode.insertBefore(catBarWrap, header.nextSibling);
+  }
+
+  const links = Array.from(document.querySelectorAll('.category-bar a, .main-nav a'));
+
+  // active link on scroll
+  const sections = links.map(l=>{
+    const href = l.getAttribute('href');
+    return href && href.startsWith('#') ? document.querySelector(href) : null;
+  });
+
+  function onScroll(){
+    const offset = window.scrollY + 100;
+    // header shrink
+    if(window.scrollY > 30) document.querySelector('.site-header')?.classList.add('shrink');
+    else document.querySelector('.site-header')?.classList.remove('shrink');
+
+    // highlight category link
+    let found = false;
+    sections.forEach((sec, i)=>{
+      if(!sec) return;
+      const top = sec.offsetTop;
+      const bottom = top + sec.offsetHeight;
+      if(offset >= top && offset < bottom){
+        links.forEach(x=>x.classList.remove('active'));
+        links[i].classList.add('active');
+        found = true;
+      }
+    });
+    if(!found) links.forEach(x=>x.classList.remove('active'));
+  }
+
+  window.addEventListener('scroll', onScroll);
+  // run once
+  setTimeout(onScroll, 300);
+})();
