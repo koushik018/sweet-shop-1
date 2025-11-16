@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if(!waBtn) return;
 
   // Replace with your phone number in international format (no +)
-  const PHONE = '9676401967'; // e.g. '919812345678'
+  const PHONE = '919676401967'; // e.g. '919812345678'
 
   function cartToMessage(){
     const cart = loadCart();
