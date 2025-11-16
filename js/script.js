@@ -248,3 +248,43 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // run once
   setTimeout(onScroll, 300);
 })();
+// ===== WhatsApp order button logic =====
+(function(){
+  const waBtn = document.getElementById('whatsapp-btn');
+  if(!waBtn) return;
+
+  // Replace with your phone number in international format (no +)
+  const PHONE = '9676401967'; // e.g. '919812345678'
+
+  function cartToMessage(){
+    const cart = loadCart();
+    const itemLines = Object.keys(cart).map(id=>{
+      const p = products.find(x=>x.id === Number(id));
+      if(!p) return null;
+      const qty = cart[id];
+      const unit = p.unit ? ` ${p.unit}` : '';
+      const price = p.price && p.price>0 ? ` — ₹${(Number(p.price)||0) * qty}` : '';
+      return `${p.name} x ${qty}${unit}${price}`;
+    }).filter(Boolean);
+    if(itemLines.length === 0){
+      return `Hi Srihithas Foods, I want to place an order.%0A(Please specify items and quantities)`;
+    }
+    const body = [
+      `Hi Srihithas Foods,`,
+      `I would like to order from your store:`,
+      ...itemLines,
+      `\nPlease confirm availability and delivery details.`,
+      `\nName: `,
+      `Phone: `
+    ].join('%0A');
+    return encodeURI(body);
+  }
+
+  waBtn.addEventListener('click', (e)=>{
+    e.preventDefault();
+    const msg = cartToMessage();
+    // open WhatsApp Web / App
+    const url = `https://wa.me/${PHONE}?text=${msg}`;
+    window.open(url, '_blank');
+  });
+})();
