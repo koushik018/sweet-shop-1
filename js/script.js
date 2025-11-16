@@ -75,7 +75,7 @@ const products = [
 ];
 
 // -------------------------
-// UI + Cart logic (same pattern as before)
+// UI + Cart logic
 // -------------------------
 const categoryGrids = document.querySelectorAll('.products-grid');
 const cartCountEl = document.getElementById('cart-count');
@@ -184,77 +184,107 @@ document.addEventListener('DOMContentLoaded', ()=>{
   setupContact();
   setupCartBtn();
 });
-// ===== UI helpers: smooth scroll, active category highlight, header shrink =====
-(function(){
-  // smooth scroll for header nav and category links
-  document.querySelectorAll('.main-nav a, .category-bar a').forEach(a=>{
-    a.addEventListener('click', function(ev){
-      const href = this.getAttribute('href');
-      if(!href || !href.startsWith('#')) return;
-      ev.preventDefault();
-      const target = document.querySelector(href);
-      if(!target) return;
-      window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
-    });
-  });
 
-  // build category bar dynamically (desktop + mobile)
-  const catBarWrap = document.createElement('div');
-  catBarWrap.className = 'category-bar';
-  catBarWrap.innerHTML = `<div class="container row">
-    <div class="row">
+// ===== Improved UI helpers: robust smooth scroll, active highlight, header shrink =====
+(function(){
+  // helper: get header + category heights
+  function getTopOffset(){
+    const header = document.querySelector('.site-header');
+    const cat = document.querySelector('.category-bar');
+    let offset = 0;
+    if(header) offset += header.getBoundingClientRect().height;
+    if(cat) offset += cat.getBoundingClientRect().height;
+    // add small gap
+    return Math.ceil(offset) + 12;
+  }
+
+  // smooth scroll for header nav and category links
+  function safeScrollTo(selector){
+    const target = document.querySelector(selector);
+    if(!target) return;
+    const top = Math.round(target.getBoundingClientRect().top + window.scrollY) - getTopOffset();
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  }
+
+  // attach click handlers (works for elements added later too)
+  function attachLinkHandlers(){
+    document.querySelectorAll('.main-nav a, .category-bar a').forEach(a=>{
+      a.removeEventListener('click', a.__smoothScrollHandler);
+      const handler = function(ev){
+        const href = this.getAttribute('href');
+        if(!href || !href.startsWith('#')) return;
+        ev.preventDefault();
+        safeScrollTo(href);
+      };
+      a.addEventListener('click', handler);
+      a.__smoothScrollHandler = handler;
+    });
+  }
+
+  // build category bar if missing (adds Contact too)
+  if(!document.querySelector('.category-bar')){
+    const catBarWrap = document.createElement('div');
+    catBarWrap.className = 'category-bar';
+    catBarWrap.innerHTML = `<div class="container row"><div class="row">
       <a href="#sweets">Sweets</a>
       <a href="#pickles">Pickles</a>
       <a href="#fried">Fried</a>
       <a href="#podi">Podi</a>
-    </div>
-  </div>`;
-  // insert after header
-  const header = document.querySelector('.site-header');
-  if(header && header.parentNode){
-    header.parentNode.insertBefore(catBarWrap, header.nextSibling);
+      <a href="#contact">Contact</a>
+    </div></div>`;
+    const header = document.querySelector('.site-header');
+    if(header && header.parentNode){
+      header.parentNode.insertBefore(catBarWrap, header.nextSibling);
+    }
   }
 
-  const links = Array.from(document.querySelectorAll('.category-bar a, .main-nav a'));
-
-  // active link on scroll
-  const sections = links.map(l=>{
+  // active highlight on scroll
+  const navLinks = Array.from(document.querySelectorAll('.category-bar a, .main-nav a'));
+  const sections = navLinks.map(l=>{
     const href = l.getAttribute('href');
     return href && href.startsWith('#') ? document.querySelector(href) : null;
   });
 
   function onScroll(){
-    const offset = window.scrollY + 100;
     // header shrink
     if(window.scrollY > 30) document.querySelector('.site-header')?.classList.add('shrink');
     else document.querySelector('.site-header')?.classList.remove('shrink');
 
-    // highlight category link
+    // active link detection
+    const offset = window.scrollY + getTopOffset() + 6;
     let found = false;
     sections.forEach((sec, i)=>{
       if(!sec) return;
       const top = sec.offsetTop;
       const bottom = top + sec.offsetHeight;
       if(offset >= top && offset < bottom){
-        links.forEach(x=>x.classList.remove('active'));
-        links[i].classList.add('active');
+        navLinks.forEach(x=>x.classList.remove('active'));
+        navLinks[i].classList.add('active');
         found = true;
       }
     });
-    if(!found) links.forEach(x=>x.classList.remove('active'));
+    if(!found) navLinks.forEach(x=>x.classList.remove('active'));
+  }
+
+  // re-run renderers in case DOM changed
+  function boot(){
+    attachLinkHandlers();
+    onScroll();
   }
 
   window.addEventListener('scroll', onScroll);
-  // run once
-  setTimeout(onScroll, 300);
+  window.addEventListener('resize', function(){ setTimeout(onScroll, 120); });
+  // initial boot after slight delay (in case dynamic content inserted)
+  setTimeout(boot, 300);
 })();
+
 // ===== WhatsApp order button logic =====
 (function(){
   const waBtn = document.getElementById('whatsapp-btn');
   if(!waBtn) return;
 
   // Replace with your phone number in international format (no +)
-  const PHONE = '919676401967'; // e.g. '919812345678'
+  const PHONE = '919676401967'; // example: '919812345678'
 
   function cartToMessage(){
     const cart = loadCart();
@@ -267,7 +297,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
       return `${p.name} x ${qty}${unit}${price}`;
     }).filter(Boolean);
     if(itemLines.length === 0){
-      return `Hi Srihithas Foods, I want to place an order.%0A(Please specify items and quantities)`;
+      const plain = `Hi Srihithas Foods, I want to place an order.\n(Please specify items and quantities)`;
+      return encodeURIComponent(plain);
     }
     const body = [
       `Hi Srihithas Foods,`,
@@ -276,9 +307,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
       `\nPlease confirm availability and delivery details.`,
       `\nName: `,
       `Phone: `
-    ].join('%0A');
+    ].join('\n');
     return encodeURIComponent(body);
-
   }
 
   waBtn.addEventListener('click', (e)=>{
