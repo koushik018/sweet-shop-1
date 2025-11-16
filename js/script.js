@@ -277,7 +277,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
       `\nName: `,
       `Phone: `
     ].join('%0A');
-    return encodeURI(body);
+    return encodeURIComponent(body);
+
   }
 
   waBtn.addEventListener('click', (e)=>{
