@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Srihithas Foods — Authentic Sweets</title>
-  <meta name="description" content="SweetShop — Fresh mithai & sweets. Order online. Same-day delivery in city." />
+  <title>Srihithas Foods — Authentic Sweets & Pickles</title>
+  <meta name="description" content="Srihithas Foods — sweets, pickles, fried snacks, podi & more." />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -12,32 +12,52 @@
     <div class="container header-inner">
       <div class="logo">Srihithas Foods</div>
       <nav class="main-nav">
-        <a href="#products">Products</a>
-        <a href="#about">About</a>
+        <a href="#sweets">Sweets</a>
+        <a href="#pickles">Pickles</a>
+        <a href="#fried">Fried</a>
+        <a href="#podi">Podi</a>
         <a href="#contact">Contact</a>
       </nav>
-      <button id="cart-btn" class="btn">Cart (<span id="cart-count">0</span>)</button>
-      <button id="menu-toggle" class="hamburger" aria-label="menu">☰</button>
+      <div class="header-actions">
+        <button id="cart-btn" class="btn">Cart (<span id="cart-count">0</span>)</button>
+        <button id="menu-toggle" class="hamburger" aria-label="menu">☰</button>
+      </div>
     </div>
   </header>
 
   <main>
     <section class="hero container">
       <div>
-        <h1>Authentic Sweets — Fresh Daily</h1>
-        <p>Order now — festival offers & same-day delivery in the city.</p>
-        <a href="#products" class="btn primary">Shop Sweets</a>
+        <h1>Authentic Sweets & Local Flavours</h1>
+        <p>Freshly made — sweets, pickles, fried snacks, and podi. Call or order online.</p>
+        <a href="#sweets" class="btn primary">See Sweets</a>
       </div>
-      <img src="images/hero.jpg" alt="Sweets" class="hero-img" />
+      <img src="https://picsum.photos/seed/hero/800/400" alt="Sweets" class="hero-img" />
     </section>
 
-    <section id="products" class="container products-grid">
-      <!-- JS will render product cards -->
+    <section id="sweets" class="container category-section">
+      <h2>Sweets</h2>
+      <div class="products-grid" data-category="Sweets"></div>
+    </section>
+
+    <section id="pickles" class="container category-section">
+      <h2>Pickles</h2>
+      <div class="products-grid" data-category="Pickles"></div>
+    </section>
+
+    <section id="fried" class="container category-section">
+      <h2>Fried & Savouries</h2>
+      <div class="products-grid" data-category="Fried"></div>
+    </section>
+
+    <section id="podi" class="container category-section">
+      <h2>Podi & Powders</h2>
+      <div class="products-grid" data-category="Podi"></div>
     </section>
 
     <section id="about" class="container about">
       <h2>About Srihithas Foods</h2>
-      <p>Family recipes, fresh ingredients, and pure ghee — since 1999.</p>
+      <p>Family recipes, fresh ingredients, and pure ghee — serving authentic local sweets & pickles for years.</p>
     </section>
 
     <section id="contact" class="container contact">
@@ -53,7 +73,6 @@
 
   <footer class="site-footer container">
     <p>© <span id="year"></span> Srihithas Foods • Follow us on Instagram • Made with ❤</p>
-
   </footer>
 
   <script src="js/script.js"></script>
