@@ -537,6 +537,54 @@ document.addEventListener('DOMContentLoaded', ()=>{
   updateCartUI();
   setupCartBtn();
 
+    // ---------- Make nav/category links responsive (click + touch) ----------
+  function scrollToHash(hash){
+    const target = document.querySelector(hash);
+    if(!target) return;
+    const header = document.querySelector('.site-header');
+    const cat = document.querySelector('.category-bar');
+    let offset = 0;
+    if(header) offset += header.getBoundingClientRect().height;
+    if(cat) offset += cat.getBoundingClientRect().height;
+    const top = Math.round(target.getBoundingClientRect().top + window.scrollY) - offset - 8;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  }
+
+  function makeNavLinksResponsive(){
+    const links = Array.from(document.querySelectorAll('.main-nav a, .category-bar a'));
+    links.forEach(a=>{
+      // normal click
+      a.addEventListener('click', function(e){
+        const href = this.getAttribute('href');
+        if(!href || !href.startsWith('#')) return;
+        e.preventDefault();
+        // hide preview (if visible) so it won't cover anything
+        document.getElementById('nav-preview')?.classList.remove('show');
+        // close mobile nav/hamburger if open
+        document.querySelector('.main-nav')?.classList.remove('open');
+        document.querySelector('.hamburger')?.classList.remove('open');
+        scrollToHash(href);
+      });
+
+      // fast touch handler for mobile
+      a.addEventListener('touchstart', function(e){
+        const href = this.getAttribute('href');
+        if(!href || !href.startsWith('#')) return;
+        // prevent browser from doing an extra click later
+        e.preventDefault();
+        document.getElementById('nav-preview')?.classList.remove('show');
+        document.querySelector('.main-nav')?.classList.remove('open');
+        document.querySelector('.hamburger')?.classList.remove('open');
+        scrollToHash(href);
+      }, { passive: false });
+    });
+  }
+
+  // call it once DOM is ready (and again if you inject nav later)
+  makeNavLinksResponsive();
+  // if you later create category-bar dynamically, re-run makeNavLinksResponsive()
+
+
   // hamburger toggle (existing)
   const hamburger = document.querySelector('.hamburger');
   if(hamburger){
