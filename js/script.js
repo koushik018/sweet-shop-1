@@ -262,19 +262,7 @@ function setupContact(){
 // init
 document.addEventListener('DOMContentLoaded', ()=>{
   // build category bar (if missing) with contact link
-  if(!document.querySelector('.category-bar')){
-    const catBarWrap = document.createElement('div');
-    catBarWrap.className = 'category-bar';
-    catBarWrap.innerHTML = `<div class="container row"><div class="row">
-      <a href="#sweets">Sweets</a>
-      <a href="#pickles">Pickles</a>
-      <a href="#fried">Fried</a>
-      <a href="#podi">Podi</a>
-      <a href="#contact">Contact</a>
-    </div></div>`;
-    const header = document.querySelector('.site-header');
-    if(header && header.parentNode) header.parentNode.insertBefore(catBarWrap, header.nextSibling);
-  }
+  
 
   // render and wire up
   renderByCategory();
