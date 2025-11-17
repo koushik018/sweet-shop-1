@@ -1,5 +1,8 @@
-// js/script.js — Srihithas Foods (responsive + smoother + cart panel)
-// Full categorized product list (same as before)
+// js/script.js — Srihithas Foods (complete file)
+
+/* -------------------------
+   PRODUCTS (full categorized list)
+   ------------------------- */
 const products = [
   /* SWEETS */
   { id:101, category:"Sweets", name:"Ariselu", price:400, unit:"kg", img:"https://picsum.photos/seed/ariselu/600/400", desc:"Ariselu - crunchy & sweet." },
@@ -61,23 +64,21 @@ const products = [
   { id:503, category:"Other", name:"Mawa Burfi", price:200, unit:"kg", img:"https://picsum.photos/seed/mawa/600/400", desc:"Mawa burfi." }
 ];
 
-// DOM refs
+/* -------------------------
+   DOM references
+   ------------------------- */
 const categoryGrids = document.querySelectorAll('.products-grid');
 const cartCountEl = document.getElementById('cart-count');
 const cartBtn = document.getElementById('cart-btn');
 
-// simple localStorage cart
+/* -------------------------
+   CART (localStorage)
+   ------------------------- */
 function loadCart(){ try{ const r = localStorage.getItem('sf_cart'); return r ? JSON.parse(r) : {}; }catch(e){return{};} }
 function saveCart(c){ localStorage.setItem('sf_cart', JSON.stringify(c)); }
 function cartTotal(c){ return Object.values(c).reduce((s,v)=>s+v,0); }
-function updateCartUI(){
-  if(cartCountEl) cartCountEl.textContent = cartTotal(loadCart());
-  renderCartPanel();
-  refreshAddButtons();   // <- ensures button labels reflect cart
-}
 
-
-// update all Add buttons to reflect current cart quantities
+/* update UI: cart count, cart panel, add button labels */
 function refreshAddButtons(){
   const cart = loadCart();
   document.querySelectorAll('.btn.add').forEach(btn => {
@@ -92,8 +93,15 @@ function refreshAddButtons(){
     }
   });
 }
+function updateCartUI(){
+  if(cartCountEl) cartCountEl.textContent = cartTotal(loadCart());
+  renderCartPanel();
+  refreshAddButtons();
+}
 
-// render products (images lazy)
+/* -------------------------
+   RENDER PRODUCTS
+   ------------------------- */
 function renderByCategory(){
   const grids = Array.from(categoryGrids);
   grids.forEach(grid=>{
@@ -114,6 +122,7 @@ function renderByCategory(){
           <div class="actions">
             <button class="btn small add" data-id="${p.id}">Add</button>
             <button class="btn primary buy" data-id="${p.id}">Buy Now</button>
+            <button class="btn ghost wish" data-id="${p.id}" title="Add to wishlist">♡</button>
           </div>
         `;
         grid.appendChild(card);
@@ -123,143 +132,23 @@ function renderByCategory(){
   attachHandlers();
 }
 
-/* ===== Nav hover preview logic (names-only, adaptive) ===== */
-(function(){
-  // create preview element once
-  const preview = document.createElement('div');
-  preview.className = 'nav-preview';
-  preview.id = 'nav-preview';
-  preview.innerHTML = '<div id="nav-preview-inner" style="display:flex;gap:.5rem;flex-wrap:wrap"></div>';
-  document.body.appendChild(preview);
-
-  let showTimer = null;
-  let hideTimer = null;
-
-  function buildPreviewContent(category){
-    const inner = document.getElementById('nav-preview-inner');
-    inner.innerHTML = ''; // reset
-    const list = products.filter(p => p.category && p.category.toLowerCase() === category.toLowerCase());
-    // show all items in that category (or you can limit e.g. slice(0,12))
-    const items = list; // full list to display names only
-    if(items.length === 0){
-      inner.innerHTML = `<div class="empty">No items available</div>`;
-      return;
-    }
-    items.forEach(p=>{
-      const item = document.createElement('div');
-      item.className = 'preview-item';
-      // names-only markup; price & image intentionally omitted
-      item.innerHTML = `
-        <div class="meta">
-          <div class="name">${p.name}</div>
-        </div>
-      `;
-      inner.appendChild(item);
-    });
-    // allow preview to expand naturally — width controlled by CSS max-width
-    preview.style.width = 'auto';
-    preview.style.maxWidth = Math.min(window.innerWidth * 0.88, 900) + 'px';
-  }
-
-  // position preview centered under the link while keeping inside viewport
-  function positionPreview(anchorEl){
-    const rect = anchorEl.getBoundingClientRect();
-    const previewEl = preview;
-    // compute desired width (auto), then place center under anchor
-    // temporarily set visibility to measure size
-    previewEl.classList.add('show'); // make visible to measure
-    previewEl.style.visibility = 'hidden';
-    previewEl.style.left = '10px';
-    previewEl.style.top = '10px';
-    // allow browser to render
-    const measured = previewEl.getBoundingClientRect();
-    const previewWidth = Math.min(measured.width || 260, window.innerWidth - 16);
-    const top = rect.bottom + window.scrollY + 8; // 8px gap
-    let left = rect.left + window.scrollX + (rect.width / 2) - (previewWidth / 2);
-    // clamp inside viewport
-    const minLeft = 8;
-    const maxLeft = window.innerWidth - previewWidth - 8;
-    left = Math.max(minLeft, Math.min(left, maxLeft));
-    previewEl.style.left = left + 'px';
-    previewEl.style.top = top + 'px';
-    previewEl.style.visibility = ''; // restore
-    previewEl.classList.remove('show'); // hide again (showPreview will re-add)
-  }
-
-  function showPreviewFor(anchorEl, category){
-    clearTimeout(hideTimer);
-    clearTimeout(showTimer);
-    showTimer = setTimeout(()=>{
-      buildPreviewContent(category);
-      positionPreview(anchorEl);
-      preview.classList.add('show');
-    }, 100); // small delay to avoid accidental hover flicker
-  }
-  function hidePreviewSoon(){
-    clearTimeout(showTimer);
-    clearTimeout(hideTimer);
-    // slightly longer delay so users can move pointer into preview
-    hideTimer = setTimeout(()=> preview.classList.remove('show'), 260);
-  }
-
-  // attach handlers to nav links (header nav)
-  function attachNavPreview(){
-    const navLinks = Array.from(document.querySelectorAll('.main-nav a, .category-bar a'));
-    navLinks.forEach(a=>{
-      const href = a.getAttribute('href');
-      if(!href || !href.startsWith('#')) return;
-      const cat = href.replace('#','').trim();
-      a.addEventListener('mouseenter', (e)=> showPreviewFor(a, cat) );
-      a.addEventListener('focus', (e)=> showPreviewFor(a, cat) ); // keyboard support
-      a.addEventListener('mouseleave', hidePreviewSoon );
-      a.addEventListener('blur', hidePreviewSoon );
-    });
-
-    // keep preview open while hovered
-    preview.addEventListener('mouseenter', ()=> clearTimeout(hideTimer) );
-    preview.addEventListener('mouseleave', hidePreviewSoon );
-
-    // re-position on window resize (keeps preview in view)
-    window.addEventListener('resize', ()=> {
-      const active = document.querySelector('.main-nav a:hover, .category-bar a:hover');
-      if(active) positionPreview(active);
-    });
-  }
-
-  // call after DOM ready (but safe if called later)
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', attachNavPreview);
-  } else attachNavPreview();
-
-})();
-
-
+/* -------------------------
+   HANDLERS (Add / Buy / Wishlist)
+   ------------------------- */
 function attachHandlers(){
-  // Add buttons
-  document.querySelectorAll('.btn.add').forEach(b=>{
-    // remove previously attached handlers (safety)
-    b.replaceWith(b.cloneNode(true));
-  });
-
-  // re-select after cloning
+  // safely remove old listeners by cloning nodes then re-attach
+  document.querySelectorAll('.btn.add').forEach(b=> b.replaceWith(b.cloneNode(true)));
   document.querySelectorAll('.btn.add').forEach(b=>{
     b.addEventListener('click', e=>{
       const id = +e.currentTarget.dataset.id;
-      const cart = loadCart();
-      cart[id] = (cart[id] || 0) + 1;
-      saveCart(cart);
-      updateCartUI();         // will call refreshAddButtons()
-      // tiny pulse for feedback
-      e.currentTarget.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.96)' }, { transform: 'scale(1)' }], { duration: 220 });
+      const cart = loadCart(); cart[id] = (cart[id] || 0) + 1; saveCart(cart);
+      updateCartUI();
+      e.currentTarget.animate([{transform:'scale(1)'},{transform:'scale(.96)'},{transform:'scale(1)'}],{duration:180});
     });
   });
 
-  // Buy buttons
-  // remove old handlers then attach fresh
-  document.querySelectorAll('.btn.buy').forEach(b=>{
-    b.replaceWith(b.cloneNode(true));
-  });
-
+  // Buy
+  document.querySelectorAll('.btn.buy').forEach(b=> b.replaceWith(b.cloneNode(true)));
   document.querySelectorAll('.btn.buy').forEach(b=>{
     b.addEventListener('click', e=>{
       const id = +e.currentTarget.dataset.id;
@@ -269,24 +158,35 @@ function attachHandlers(){
       if(qty === null) return;
       qty = qty.trim();
       if(!qty || isNaN(qty) || Number(qty) <= 0) return alert('Enter valid qty');
-      const cart = loadCart();
-      cart[id] = (cart[id] || 0) + Number(qty);
-      saveCart(cart);
+      const cart = loadCart(); cart[id] = (cart[id]||0) + Number(qty); saveCart(cart);
       updateCartUI();
-      openCartPanel(); // optional: open cart to review
+      openCartPanel();
     });
   });
 
-  // After handlers attached, make sure Add buttons show correct qty
+  // Wishlist heart
+  document.querySelectorAll('.wish').forEach(b=> b.replaceWith(b.cloneNode(true)));
+  document.querySelectorAll('.wish').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const id = +e.currentTarget.dataset.id;
+      const arr = (JSON.parse(localStorage.getItem('sf_wishlist'))||[]);
+      if(!arr.includes(id)) arr.push(id);
+      localStorage.setItem('sf_wishlist', JSON.stringify(arr));
+      alert('Added to wishlist (demo). Open Menu -> My Wishlist to view.');
+    });
+  });
+
   refreshAddButtons();
 }
 
-// ----------------- SLIDE-IN CART PANEL -----------------
-/* render cart into a right panel with qty controls and checkout simulation */
+/* -------------------------
+   CART PANEL (slide-in)
+   ------------------------- */
 function ensureCartPanel(){
   if(document.querySelector('.cart-panel')) return;
   const panel = document.createElement('aside');
   panel.className = 'cart-panel';
+  panel.id = 'cart-panel';
   panel.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h3>Your Cart</h3>
@@ -304,7 +204,6 @@ function ensureCartPanel(){
     </div>
   `;
   document.body.appendChild(panel);
-
   document.getElementById('cart-close').addEventListener('click', closeCartPanel);
   document.getElementById('clear-cart').addEventListener('click', ()=>{
     if(!confirm('Clear cart?')) return;
@@ -313,7 +212,17 @@ function ensureCartPanel(){
   document.getElementById('checkout-btn').addEventListener('click', ()=>{
     const cart = loadCart();
     if(Object.keys(cart).length === 0) return alert('Cart empty');
-    alert('Demo checkout complete. We will integrate Razorpay later.');
+    // demo: save a fake order
+    const orders = JSON.parse(localStorage.getItem('sf_orders')||'[]');
+    const id = 'ORD' + Date.now().toString().slice(-6);
+    // build items and total
+    const items = Object.keys(cart).map(k=>{
+      const p = products.find(x=>x.id===Number(k)); return { id:k, name: p? p.name:'?', qty: cart[k], price: p? p.price:0 };
+    });
+    const total = items.reduce((s,i)=> s + ((i.price||0) * i.qty), 0);
+    orders.unshift({ id, items, total, ts:Date.now() });
+    localStorage.setItem('sf_orders', JSON.stringify(orders));
+    alert('Demo checkout complete. Order id: ' + id);
     saveCart({}); updateCartUI(); closeCartPanel();
   });
 }
@@ -374,28 +283,204 @@ function renderCartPanel(){
   totalEl.textContent = '₹' + grand;
 }
 
-function openCartPanel(){
-  ensureCartPanel();
-  const panel = document.querySelector('.cart-panel');
-  panel.classList.add('open');
-  // trap focus lightly
-  panel.focus();
-}
-function closeCartPanel(){
-  const panel = document.querySelector('.cart-panel');
-  panel.classList.remove('open');
-}
+function openCartPanel(){ ensureCartPanel(); document.querySelector('.cart-panel').classList.add('open'); }
+function closeCartPanel(){ const panel = document.querySelector('.cart-panel'); if(panel) panel.classList.remove('open'); }
 
-// attach cart button
+/* attach cart button */
 function setupCartBtn(){
   if(!cartBtn) return;
-  cartBtn.addEventListener('click', ()=>{
-    openCartPanel();
-  });
+  cartBtn.addEventListener('click', ()=> openCartPanel());
 }
 
-// Contact handler (same)
-function setupContact(){
+/* -------------------------
+   NAV HOVER PREVIEW (names-only)
+   ------------------------- */
+(function(){
+  const preview = document.createElement('div');
+  preview.className = 'nav-preview';
+  preview.id = 'nav-preview';
+  preview.innerHTML = '<div id="nav-preview-inner" style="display:flex;gap:.5rem;flex-wrap:wrap"></div>';
+  document.body.appendChild(preview);
+
+  let showTimer = null;
+  let hideTimer = null;
+
+  function buildPreviewContent(category){
+    const inner = document.getElementById('nav-preview-inner');
+    inner.innerHTML = '';
+    const list = products.filter(p => p.category && p.category.toLowerCase() === category.toLowerCase());
+    const items = list; // show all names
+    if(items.length === 0){ inner.innerHTML = `<div class="empty">No items available</div>`; return; }
+    items.forEach(p=>{
+      const item = document.createElement('div');
+      item.className = 'preview-item';
+      item.innerHTML = `<div class="meta"><div class="name">${p.name}</div></div>`;
+      inner.appendChild(item);
+    });
+    preview.style.width = 'auto';
+    preview.style.maxWidth = Math.min(window.innerWidth * 0.88, 900) + 'px';
+  }
+
+  function positionPreview(anchorEl){
+    const rect = anchorEl.getBoundingClientRect();
+    const previewEl = preview;
+    previewEl.classList.add('show');
+    previewEl.style.visibility = 'hidden';
+    previewEl.style.left = '10px';
+    previewEl.style.top = '10px';
+    const measured = previewEl.getBoundingClientRect();
+    const previewWidth = Math.min(measured.width || 260, window.innerWidth - 16);
+    const top = rect.bottom + window.scrollY + 8;
+    let left = rect.left + window.scrollX + (rect.width / 2) - (previewWidth / 2);
+    const minLeft = 8;
+    const maxLeft = window.innerWidth - previewWidth - 8;
+    left = Math.max(minLeft, Math.min(left, maxLeft));
+    previewEl.style.left = left + 'px';
+    previewEl.style.top = top + 'px';
+    previewEl.style.visibility = '';
+    previewEl.classList.remove('show');
+  }
+
+  function showPreviewFor(anchorEl, category){
+    clearTimeout(hideTimer); clearTimeout(showTimer);
+    showTimer = setTimeout(()=>{ buildPreviewContent(category); positionPreview(anchorEl); preview.classList.add('show'); }, 100);
+  }
+  function hidePreviewSoon(){ clearTimeout(showTimer); clearTimeout(hideTimer); hideTimer = setTimeout(()=> preview.classList.remove('show'), 260); }
+
+  function attachNavPreview(){
+    const navLinks = Array.from(document.querySelectorAll('.main-nav a, .category-bar a'));
+    navLinks.forEach(a=>{
+      const href = a.getAttribute('href');
+      if(!href || !href.startsWith('#')) return;
+      const cat = href.replace('#','').trim();
+      a.addEventListener('mouseenter', ()=> showPreviewFor(a, cat) );
+      a.addEventListener('focus', ()=> showPreviewFor(a, cat) );
+      a.addEventListener('mouseleave', hidePreviewSoon );
+      a.addEventListener('blur', hidePreviewSoon );
+    });
+    preview.addEventListener('mouseenter', ()=> clearTimeout(hideTimer) );
+    preview.addEventListener('mouseleave', hidePreviewSoon );
+    window.addEventListener('resize', ()=> { const active = document.querySelector('.main-nav a:hover, .category-bar a:hover'); if(active) positionPreview(active); });
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attachNavPreview); else attachNavPreview();
+})();
+
+/* -------------------------
+   USER PANEL (hamburger menu)
+   ------------------------- */
+(function(){
+  const hamburger = document.getElementById('hamburger');
+  const panel = document.getElementById('user-panel');
+  const closeBtn = document.getElementById('user-panel-close');
+  const backdrop = document.getElementById('user-panel-backdrop');
+  const links = Array.from(document.querySelectorAll('.user-link'));
+  const panelContent = document.getElementById('user-panel-content');
+
+  const KEY_USER = 'sf_user';
+  const KEY_ORDERS = 'sf_orders';
+  const KEY_WISHLIST = 'sf_wishlist';
+
+  function togglePanel(open){
+    if(open){ panel.classList.add('open'); backdrop.classList.add('show'); hamburger?.classList.add('open'); panel.setAttribute('aria-hidden','false'); hamburger?.setAttribute('aria-expanded','true'); }
+    else { panel.classList.remove('open'); backdrop.classList.remove('show'); hamburger?.classList.remove('open'); panel.setAttribute('aria-hidden','true'); hamburger?.setAttribute('aria-expanded','false'); }
+  }
+  if(hamburger) hamburger.addEventListener('click', ()=> togglePanel(true));
+  if(closeBtn) closeBtn.addEventListener('click', ()=> togglePanel(false));
+  if(backdrop) backdrop.addEventListener('click', ()=> togglePanel(false));
+  window.addEventListener('keydown', (e)=> { if(e.key === 'Escape') togglePanel(false); });
+
+  function showView(id){
+    const views = panelContent.querySelectorAll('.panel-view');
+    views.forEach(v => v.style.display = v.dataset.viewId === id ? '' : 'none');
+    const active = panelContent.querySelector(`.panel-view[data-view-id="${id}"]`);
+    if(active) active.querySelector('input,textarea,button')?.focus();
+    if(id === 'orders') renderOrders();
+    if(id === 'wishlist') renderWishlist();
+    if(id === 'login') refreshLoginState();
+  }
+
+  links.forEach(btn=> btn.addEventListener('click', ()=> showView(btn.dataset.view)) );
+
+  // LOGIN
+  const loginForm = document.getElementById('login-form');
+  const logoutBtn = document.getElementById('logout-btn');
+  function saveUser(u){ localStorage.setItem(KEY_USER, JSON.stringify(u)); }
+  function loadUser(){ try{ return JSON.parse(localStorage.getItem(KEY_USER)); }catch(e){return null;} }
+  function refreshLoginState(){
+    const user = loadUser();
+    if(user){ loginForm.name.value = user.name || ''; loginForm.phone.value = user.phone || ''; logoutBtn.style.display = ''; }
+    else { loginForm.reset(); logoutBtn.style.display = 'none'; }
+  }
+  if(loginForm){
+    loginForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      const name = loginForm.name.value.trim(); const phone = loginForm.phone.value.trim();
+      if(!name || !phone) return alert('Please enter name and phone');
+      saveUser({ name, phone });
+      alert('Signed in (demo).'); refreshLoginState();
+    });
+  }
+  if(logoutBtn) logoutBtn.addEventListener('click', ()=>{ localStorage.removeItem(KEY_USER); refreshLoginState(); alert('Signed out.'); });
+
+  // ORDERS & WISHLIST
+  function getOrders(){ try{ return JSON.parse(localStorage.getItem(KEY_ORDERS)) || []; } catch(e){ return []; } }
+  function getWishlist(){ try{ return JSON.parse(localStorage.getItem(KEY_WISHLIST)) || []; } catch(e){ return []; } }
+  function saveOrders(arr){ localStorage.setItem(KEY_ORDERS, JSON.stringify(arr)); }
+  function saveWishlist(arr){ localStorage.setItem(KEY_WISHLIST, JSON.stringify(arr)); }
+
+  function renderOrders(){
+    const el = document.getElementById('orders-list');
+    const orders = getOrders();
+    if(!el) return;
+    if(orders.length === 0) { el.innerHTML = '<div class="muted">No orders yet.</div>'; return; }
+    el.innerHTML = orders.map(o => `<div style="padding:.5rem;border-bottom:1px dashed rgba(0,0,0,0.04)"><strong>Order ${o.id}</strong><div class="muted" style="font-size:.95rem">${o.items.length} items — ₹${o.total}</div></div>`).join('');
+  }
+
+  function renderWishlist(){
+    const el = document.getElementById('wishlist-list');
+    const list = getWishlist();
+    if(!el) return;
+    if(list.length === 0) { el.innerHTML = '<div class="muted">No wishlist items.</div>'; return; }
+    el.innerHTML = list.map(id => {
+      const p = products.find(x=>x.id === Number(id));
+      if(!p) return '';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem;border-bottom:1px dashed rgba(0,0,0,0.04)"><div><strong>${p.name}</strong><div class="muted">${p.price > 0 ? '₹'+p.price : 'Price on request'}</div></div><button class="btn small remove-wl" data-id="${p.id}">Remove</button></div>`;
+    }).join('');
+    el.querySelectorAll('.remove-wl').forEach(b=>{
+      b.addEventListener('click', (e)=>{
+        const id = +e.currentTarget.dataset.id;
+        let arr = getWishlist(); arr = arr.filter(x=>x !== id); saveWishlist(arr); renderWishlist();
+      });
+    });
+  }
+
+  // contact in panel
+  const userContactForm = document.getElementById('user-contact-form');
+  if(userContactForm) userContactForm.addEventListener('submit', e=>{ e.preventDefault(); alert('Thanks! We got your message (demo).'); userContactForm.reset(); });
+
+  // track order
+  const trackForm = document.getElementById('track-form');
+  if(trackForm){
+    trackForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      const id = trackForm.orderId?.value?.trim();
+      const res = document.getElementById('track-result');
+      if(!id){ res.textContent = 'Enter order id'; return; }
+      res.innerHTML = `<div class="muted">Order ${id} not found — demo only.</div>`;
+    });
+  }
+
+  window.addToWishlist = function(id){ const arr = getWishlist(); if(!arr.includes(id)) arr.push(id); saveWishlist(arr); alert('Added to wishlist (demo)'); };
+
+  panel.addEventListener('transitionend', ()=>{ if(panel.classList.contains('open')) showView('items'); });
+  refreshLoginState();
+})();
+
+/* -------------------------
+   CONTACT form (main page)
+   ------------------------- */
+(function(){
   const form = document.getElementById('contact-form');
   if(!form) return;
   form.addEventListener('submit', e=>{
@@ -406,94 +491,16 @@ function setupContact(){
     alert('Thanks! We received your message. We will contact you soon.');
     form.reset();
   });
-}
-
-// init
-document.addEventListener('DOMContentLoaded', ()=>{
-  // build category bar (if missing) with contact link
-  
-
-  // render and wire up
-  renderByCategory();
-  updateCartUI();
-  setupContact();
-  setupCartBtn();
-
-  // hamburger menu toggle (mobile)
-  const hamburger = document.querySelector('.hamburger');
-  if(hamburger){
-    hamburger.addEventListener('click', ()=>{
-      document.querySelector('.main-nav')?.classList.toggle('open');
-      hamburger.classList.toggle('open');
-    });
-  }
-
-  // basic close cart on ESC
-  window.addEventListener('keydown', (e)=>{
-    if(e.key === 'Escape') closeCartPanel();
-  });
-});
-
-// ===== Improved UI helpers: robust smooth scroll, active highlight, header shrink =====
-(function(){
-  function getTopOffset(){
-    const header = document.querySelector('.site-header');
-    const cat = document.querySelector('.category-bar');
-    let offset = 0;
-    if(header) offset += header.getBoundingClientRect().height;
-    if(cat) offset += cat.getBoundingClientRect().height;
-    return Math.ceil(offset) + 8;
-  }
-  function safeScrollTo(selector){
-    const target = document.querySelector(selector);
-    if(!target) return;
-    const top = Math.round(target.getBoundingClientRect().top + window.scrollY) - getTopOffset();
-    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-  }
-  function attachLinkHandlers(){
-    document.querySelectorAll('.main-nav a, .category-bar a').forEach(a=>{
-      a.removeEventListener('click', a.__smoothScrollHandler);
-      const handler = function(ev){
-        const href = this.getAttribute('href');
-        if(!href || !href.startsWith('#')) return;
-        ev.preventDefault();
-        safeScrollTo(href);
-      };
-      a.addEventListener('click', handler);
-      a.__smoothScrollHandler = handler;
-    });
-  }
-  const navLinks = Array.from(document.querySelectorAll('.category-bar a, .main-nav a'));
-  const sections = () => navLinks.map(l=>{
-    const href = l.getAttribute('href'); return href && href.startsWith('#') ? document.querySelector(href) : null;
-  });
-
-  function onScroll(){
-    if(window.scrollY > 30) document.querySelector('.site-header')?.classList.add('shrink'); else document.querySelector('.site-header')?.classList.remove('shrink');
-    const offset = window.scrollY + getTopOffset() + 6;
-    let found = false;
-    const secs = sections();
-    secs.forEach((sec, i)=>{
-      if(!sec) return;
-      const top = sec.offsetTop;
-      const bottom = top + sec.offsetHeight;
-      if(offset >= top && offset < bottom){
-        navLinks.forEach(x=>x.classList.remove('active')); navLinks[i].classList.add('active'); found = true;
-      }
-    });
-    if(!found) navLinks.forEach(x=>x.classList.remove('active'));
-  }
-
-  window.addEventListener('scroll', onScroll);
-  window.addEventListener('resize', ()=> setTimeout(onScroll, 120));
-  setTimeout(()=>{ attachLinkHandlers(); onScroll(); }, 300);
 })();
 
-// ===== WhatsApp order button logic (uses encodeURIComponent) =====
+/* -------------------------
+   WhatsApp order button
+   ------------------------- */
 (function(){
   const waBtn = document.getElementById('whatsapp-btn');
   if(!waBtn) return;
-  const PHONE = '919676401967'; // update if needed
+  const PHONE = '919676401967';
+  function loadCart(){ try{ const r = localStorage.getItem('sf_cart'); return r ? JSON.parse(r) : {}; }catch(e){return{};} }
   function cartToMessage(){
     const cart = loadCart();
     const itemLines = Object.keys(cart).map(id=>{
@@ -518,172 +525,30 @@ document.addEventListener('DOMContentLoaded', ()=>{
     ].join('\n');
     return encodeURIComponent(body);
   }
-  waBtn.addEventListener('click', (e)=>{
-    e.preventDefault();
-    const msg = cartToMessage();
-    const url = `https://wa.me/${PHONE}?text=${msg}`;
-    window.open(url, '_blank');
-  });
+  waBtn.addEventListener('click', (e)=>{ e.preventDefault(); const msg = cartToMessage(); const url = `https://wa.me/${PHONE}?text=${msg}`; window.open(url, '_blank'); });
 })();
 
+/* -------------------------
+   INIT
+   ------------------------- */
+document.addEventListener('DOMContentLoaded', ()=>{
+  // build and render
+  renderByCategory();
+  updateCartUI();
+  setupCartBtn();
 
-/* ===== user panel (hamburger menu + views) ===== */
-(function(){
-  const hamburger = document.getElementById('hamburger');
-  const panel = document.getElementById('user-panel');
-  const closeBtn = document.getElementById('user-panel-close');
-  const backdrop = document.getElementById('user-panel-backdrop');
-  const links = Array.from(document.querySelectorAll('.user-link'));
-  const panelContent = document.getElementById('user-panel-content');
-
-  // quick storage keys
-  const KEY_USER = 'sf_user';
-  const KEY_ORDERS = 'sf_orders';
-  const KEY_WISHLIST = 'sf_wishlist';
-
-  function togglePanel(open){
-    if(open){
-      panel.classList.add('open');
-      backdrop.classList.add('show');
-      hamburger?.classList.add('open');
-      panel.setAttribute('aria-hidden', 'false');
-      hamburger?.setAttribute('aria-expanded','true');
-    } else {
-      panel.classList.remove('open');
-      backdrop.classList.remove('show');
-      hamburger?.classList.remove('open');
-      panel.setAttribute('aria-hidden', 'true');
-      hamburger?.setAttribute('aria-expanded','false');
-    }
-  }
-
+  // hamburger toggle (existing)
+  const hamburger = document.querySelector('.hamburger');
   if(hamburger){
-    hamburger.addEventListener('click', ()=> togglePanel(true));
-  }
-  if(closeBtn) closeBtn.addEventListener('click', ()=> togglePanel(false));
-  if(backdrop) backdrop.addEventListener('click', ()=> togglePanel(false));
-  window.addEventListener('keydown', (e)=> { if(e.key === 'Escape') togglePanel(false); });
-
-  // show view by id
-  function showView(id){
-    const views = panelContent.querySelectorAll('.panel-view');
-    views.forEach(v => v.style.display = v.dataset.viewId === id ? '' : 'none');
-    // focus first input if any
-    const active = panelContent.querySelector(`.panel-view[data-view-id="${id}"]`);
-    if(active) active.querySelector('input,textarea,button')?.focus();
-    // do some view-specific refresh
-    if(id === 'orders') renderOrders();
-    if(id === 'wishlist') renderWishlist();
-    if(id === 'login') refreshLoginState();
-  }
-
-  links.forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const view = btn.dataset.view;
-      showView(view);
-    });
-  });
-
-  // LOGIN form (mock)
-  const loginForm = document.getElementById('login-form');
-  const logoutBtn = document.getElementById('logout-btn');
-  function saveUser(u){ localStorage.setItem(KEY_USER, JSON.stringify(u)); }
-  function loadUser(){ try{ return JSON.parse(localStorage.getItem(KEY_USER)); }catch(e){return null;} }
-  function refreshLoginState(){
-    const user = loadUser();
-    if(user){
-      loginForm.name.value = user.name || '';
-      loginForm.phone.value = user.phone || '';
-      logoutBtn.style.display = '';
-    } else {
-      loginForm.reset();
-      logoutBtn.style.display = 'none';
-    }
-  }
-  if(loginForm){
-    loginForm.addEventListener('submit', e=>{
-      e.preventDefault();
-      const name = loginForm.name.value.trim();
-      const phone = loginForm.phone.value.trim();
-      if(!name || !phone) return alert('Please enter name and phone');
-      saveUser({ name, phone });
-      alert('Signed in (demo).');
-      refreshLoginState();
-    });
-  }
-  if(logoutBtn) logoutBtn.addEventListener('click', ()=>{
-    localStorage.removeItem(KEY_USER);
-    refreshLoginState();
-    alert('Signed out.');
-  });
-
-  // ORDERS & WISHLIST render
-  function getOrders(){ try{ return JSON.parse(localStorage.getItem(KEY_ORDERS)) || []; } catch(e){ return []; } }
-  function getWishlist(){ try{ return JSON.parse(localStorage.getItem(KEY_WISHLIST)) || []; } catch(e){ return []; } }
-  function saveOrders(arr){ localStorage.setItem(KEY_ORDERS, JSON.stringify(arr)); }
-  function saveWishlist(arr){ localStorage.setItem(KEY_WISHLIST, JSON.stringify(arr)); }
-
-  function renderOrders(){
-    const el = document.getElementById('orders-list');
-    const orders = getOrders();
-    if(!el) return;
-    if(orders.length === 0) { el.innerHTML = '<div class="muted">No orders yet.</div>'; return; }
-    el.innerHTML = orders.map(o => `<div style="padding:.5rem;border-bottom:1px dashed rgba(0,0,0,0.04)"><strong>Order ${o.id}</strong><div class="muted" style="font-size:.95rem">${o.items.length} items — ₹${o.total}</div></div>`).join('');
-  }
-
-  function renderWishlist(){
-    const el = document.getElementById('wishlist-list');
-    const list = getWishlist();
-    if(!el) return;
-    if(list.length === 0) { el.innerHTML = '<div class="muted">No wishlist items.</div>'; return; }
-    el.innerHTML = list.map(id => {
-      const p = products.find(x=>x.id === Number(id));
-      if(!p) return '';
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem;border-bottom:1px dashed rgba(0,0,0,0.04)"><div><strong>${p.name}</strong><div class="muted">${p.price > 0 ? '₹'+p.price : 'Price on request'}</div></div><button class="btn small remove-wl" data-id="${p.id}">Remove</button></div>`;
-    }).join('');
-    // attach remove handlers
-    el.querySelectorAll('.remove-wl').forEach(b=>{
-      b.addEventListener('click', (e)=>{
-        const id = +e.currentTarget.dataset.id;
-        let arr = getWishlist(); arr = arr.filter(x=>x !== id); saveWishlist(arr); renderWishlist();
-      });
+    hamburger.addEventListener('click', ()=>{
+      document.querySelector('.main-nav')?.classList.toggle('open');
+      hamburger.classList.toggle('open');
     });
   }
 
-  // contact in panel
-  const userContactForm = document.getElementById('user-contact-form');
-  if(userContactForm){
-    userContactForm.addEventListener('submit', e=>{
-      e.preventDefault();
-      alert('Thanks! We got your message (demo).');
-      userContactForm.reset();
-    });
-  }
+  // ESC closes cart panel
+  window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') { closeCartPanel(); document.querySelector('.user-panel')?.classList.remove('open'); document.getElementById('user-panel-backdrop')?.classList.remove('show'); } });
 
-  // track order
-  const trackForm = document.getElementById('track-form');
-  if(trackForm){
-    trackForm.addEventListener('submit', e=>{
-      e.preventDefault();
-      const id = trackForm.orderId?.value?.trim();
-      const res = document.getElementById('track-result');
-      if(!id){ res.textContent = 'Enter order id'; return; }
-      // demo: no real orders. fake status
-      res.innerHTML = `<div class="muted">Order ${id} not found — this is a demo. If it existed, status would appear here.</div>`;
-    });
-  }
-
-  // Quick helper to add item to wishlist from product card (optional)
-  // call addToWishlist(id) from other code if you want quick add
-  window.addToWishlist = function(id){
-    const arr = getWishlist(); if(!arr.includes(id)) arr.push(id); saveWishlist(arr); alert('Added to wishlist (demo)'); 
-  };
-
-  // show default view when opened
-  panel.addEventListener('transitionend', ()=>{
-    if(panel.classList.contains('open')) showView('items');
-  });
-
-  // init view states
-  refreshLoginState();
-})();
+  // set year
+  const yearEl = document.getElementById('year'); if(yearEl) yearEl.textContent = new Date().getFullYear();
+});
