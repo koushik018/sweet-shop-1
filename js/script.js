@@ -102,13 +102,13 @@ function renderByCategory(){
   attachHandlers();
 }
 
-/* ===== Nav hover preview logic ===== */
+/* ===== Nav hover preview logic (names-only, adaptive) ===== */
 (function(){
   // create preview element once
   const preview = document.createElement('div');
   preview.className = 'nav-preview';
   preview.id = 'nav-preview';
-  preview.innerHTML = '<div id="nav-preview-inner" style="display:flex;gap:.5rem"></div>';
+  preview.innerHTML = '<div id="nav-preview-inner" style="display:flex;gap:.5rem;flex-wrap:wrap"></div>';
   document.body.appendChild(preview);
 
   let showTimer = null;
@@ -118,39 +118,51 @@ function renderByCategory(){
     const inner = document.getElementById('nav-preview-inner');
     inner.innerHTML = ''; // reset
     const list = products.filter(p => p.category && p.category.toLowerCase() === category.toLowerCase());
-    // show up to 6 items
-    const items = list.slice(0,6);
+    // show all items in that category (or you can limit e.g. slice(0,12))
+    const items = list; // full list to display names only
+    if(items.length === 0){
+      inner.innerHTML = `<div class="empty">No items available</div>`;
+      return;
+    }
     items.forEach(p=>{
       const item = document.createElement('div');
       item.className = 'preview-item';
+      // names-only markup; price & image intentionally omitted
       item.innerHTML = `
-        <img src="${p.img}" alt="${p.name}" loading="lazy" />
         <div class="meta">
           <div class="name">${p.name}</div>
-          <div class="price">${p.price > 0 ? '₹'+p.price + (p.unit ? ' / '+p.unit : '') : 'Price on request'}</div>
         </div>
       `;
       inner.appendChild(item);
     });
-    if(items.length === 0){
-      inner.innerHTML = `<div style="padding:.6rem;color:var(--muted)">No items available</div>`;
-    }
+    // allow preview to expand naturally — width controlled by CSS max-width
+    preview.style.width = 'auto';
+    preview.style.maxWidth = Math.min(window.innerWidth * 0.88, 900) + 'px';
   }
 
-  // position preview centered under the link (keeps inside viewport)
+  // position preview centered under the link while keeping inside viewport
   function positionPreview(anchorEl){
     const rect = anchorEl.getBoundingClientRect();
     const previewEl = preview;
-    const previewWidth = Math.min(Math.max(260, rect.width * 1.8), 520);
-    previewEl.style.width = previewWidth + 'px';
+    // compute desired width (auto), then place center under anchor
+    // temporarily set visibility to measure size
+    previewEl.classList.add('show'); // make visible to measure
+    previewEl.style.visibility = 'hidden';
+    previewEl.style.left = '10px';
+    previewEl.style.top = '10px';
+    // allow browser to render
+    const measured = previewEl.getBoundingClientRect();
+    const previewWidth = Math.min(measured.width || 260, window.innerWidth - 16);
     const top = rect.bottom + window.scrollY + 8; // 8px gap
     let left = rect.left + window.scrollX + (rect.width / 2) - (previewWidth / 2);
     // clamp inside viewport
     const minLeft = 8;
     const maxLeft = window.innerWidth - previewWidth - 8;
     left = Math.max(minLeft, Math.min(left, maxLeft));
-    previewEl.style.top = top + 'px';
     previewEl.style.left = left + 'px';
+    previewEl.style.top = top + 'px';
+    previewEl.style.visibility = ''; // restore
+    previewEl.classList.remove('show'); // hide again (showPreview will re-add)
   }
 
   function showPreviewFor(anchorEl, category){
@@ -160,12 +172,13 @@ function renderByCategory(){
       buildPreviewContent(category);
       positionPreview(anchorEl);
       preview.classList.add('show');
-    }, 120); // slight delay to avoid accidental hover
+    }, 100); // small delay to avoid accidental hover flicker
   }
   function hidePreviewSoon(){
     clearTimeout(showTimer);
     clearTimeout(hideTimer);
-    hideTimer = setTimeout(()=> preview.classList.remove('show'), 180);
+    // slightly longer delay so users can move pointer into preview
+    hideTimer = setTimeout(()=> preview.classList.remove('show'), 260);
   }
 
   // attach handlers to nav links (header nav)
@@ -184,6 +197,12 @@ function renderByCategory(){
     // keep preview open while hovered
     preview.addEventListener('mouseenter', ()=> clearTimeout(hideTimer) );
     preview.addEventListener('mouseleave', hidePreviewSoon );
+
+    // re-position on window resize (keeps preview in view)
+    window.addEventListener('resize', ()=> {
+      const active = document.querySelector('.main-nav a:hover, .category-bar a:hover');
+      if(active) positionPreview(active);
+    });
   }
 
   // call after DOM ready (but safe if called later)
