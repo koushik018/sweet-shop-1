@@ -1,12 +1,7 @@
-// js/script.js — Srihithas Foods (FULL categorized product list)
-// - Podi items set to 400/kg as requested
-// - Items with no price left as price: 0 (Price on request)
-// - Images use picsum placeholders for quick deployment
-
+// js/script.js — Srihithas Foods (responsive + smoother + cart panel)
+// Full categorized product list (same as before)
 const products = [
-  // -------------------------
-  // SWEETS
-  // -------------------------
+  /* SWEETS */
   { id:101, category:"Sweets", name:"Ariselu", price:400, unit:"kg", img:"https://picsum.photos/seed/ariselu/600/400", desc:"Ariselu - crunchy & sweet." },
   { id:102, category:"Sweets", name:"Neti Ariselu", price:500, unit:"kg", img:"https://picsum.photos/seed/netiariselu/600/400", desc:"New-style ariselu." },
   { id:103, category:"Sweets", name:"Kajji Kayal", price:350, unit:"kg", img:"https://picsum.photos/seed/kajjikayal/600/400", desc:"Crispy kajji kayal." },
@@ -32,9 +27,7 @@ const products = [
   { id:123, category:"Sweets", name:"Rasgulla (6pcs)", price:130, unit:"pack", img:"https://picsum.photos/seed/rasgulla/600/400", desc:"Rasgulla - 6 pieces." },
   { id:124, category:"Sweets", name:"Badam Halwa", price:0, unit:"kg", img:"https://picsum.photos/seed/badamhalwa/600/400", desc:"Badam Halwa — price on request." },
 
-  // -------------------------
-  // FRIED / SAVOURIES
-  // -------------------------
+  /* FRIED */
   { id:201, category:"Fried", name:"Uppu Chakka", price:0, unit:"kg", img:"https://picsum.photos/seed/uppuchakka/600/400", desc:"Salted fried jackfruit - price on request." },
   { id:202, category:"Fried", name:"Manubolu", price:0, unit:"kg", img:"https://picsum.photos/seed/manubolu/600/400", desc:"Manubolu - price on request." },
   { id:203, category:"Fried", name:"Boondi", price:0, unit:"kg", img:"https://picsum.photos/seed/boondi/600/400", desc:"Boondi - price on request." },
@@ -43,9 +36,7 @@ const products = [
   { id:206, category:"Fried", name:"Gavva (savoury)", price:350, unit:"kg", img:"https://picsum.photos/seed/gavva/600/400", desc:"Gavva - crispy snack." },
   { id:207, category:"Fried", name:"Masala Kaju (pudina/miriyal/mirchi)", price:0, unit:"kg", img:"https://picsum.photos/seed/masalakaju/600/400", desc:"Flavoured kaju - price on request." },
 
-  // -------------------------
-  // PICKLES
-  // -------------------------
+  /* PICKLES */
   { id:301, category:"Pickles", name:"Tomato Pickle", price:400, unit:"kg", img:"https://picsum.photos/seed/tomatopickle/600/400", desc:"Tomato pickle." },
   { id:302, category:"Pickles", name:"Lemon Pickle", price:400, unit:"kg", img:"https://picsum.photos/seed/lemonpickle/600/400", desc:"Lemon pickle." },
   { id:303, category:"Pickles", name:"Avakay (Mango)", price:500, unit:"kg", img:"https://picsum.photos/seed/avakay/600/400", desc:"Spicy mango avakaya." },
@@ -55,9 +46,7 @@ const products = [
   { id:307, category:"Pickles", name:"Prawn Pickle", price:2000, unit:"kg", img:"https://picsum.photos/seed/prawn/600/400", desc:"Prawn pickle (non-veg)." },
   { id:308, category:"Pickles", name:"Allam (Ginger)", price:400, unit:"kg", img:"https://picsum.photos/seed/allam/600/400", desc:"Ginger pickle/paste." },
 
-  // -------------------------
-  // PODI (set to 400/kg)
-  // -------------------------
+  /* PODI */
   { id:401, category:"Podi", name:"Nuvvulu Podi", price:400, unit:"kg", img:"https://picsum.photos/seed/nuvvulu/600/400", desc:"Sesame podi." },
   { id:402, category:"Podi", name:"Palli Podi", price:400, unit:"kg", img:"https://picsum.photos/seed/pallipodi/600/400", desc:"Palli (peanut) podi." },
   { id:403, category:"Podi", name:"Putnala Pappu Podi", price:400, unit:"kg", img:"https://picsum.photos/seed/putnalapodi/600/400", desc:"Putnala pappu podi." },
@@ -66,27 +55,24 @@ const products = [
   { id:406, category:"Podi", name:"Minapa Pappu Podi", price:400, unit:"kg", img:"https://picsum.photos/seed/minapapodi/600/400", desc:"Minapa pappu podi." },
   { id:407, category:"Podi", name:"Pappula Podi", price:400, unit:"kg", img:"https://picsum.photos/seed/pappulapodi/600/400", desc:"Pappula (dal) podi." },
 
-  // -------------------------
-  // CHIKKI / OTHER / MISC
-  // -------------------------
+  /* OTHER */
   { id:501, category:"Other", name:"Kaju Katli (extra)", price:450, unit:"kg", img:"https://picsum.photos/seed/kajukatli2/600/400", desc:"Kaju Katli (another variant)." },
   { id:502, category:"Other", name:"Double Ka Meetha", price:120, unit:"kg", img:"https://picsum.photos/seed/doublekay/600/400", desc:"Double ka meetha - Hyderabadi style." },
   { id:503, category:"Other", name:"Mawa Burfi", price:200, unit:"kg", img:"https://picsum.photos/seed/mawa/600/400", desc:"Mawa burfi." }
 ];
 
-// -------------------------
-// UI + Cart logic
-// -------------------------
+// DOM refs
 const categoryGrids = document.querySelectorAll('.products-grid');
 const cartCountEl = document.getElementById('cart-count');
 const cartBtn = document.getElementById('cart-btn');
 
+// simple localStorage cart
 function loadCart(){ try{ const r = localStorage.getItem('sf_cart'); return r ? JSON.parse(r) : {}; }catch(e){return{};} }
 function saveCart(c){ localStorage.setItem('sf_cart', JSON.stringify(c)); }
 function cartTotal(c){ return Object.values(c).reduce((s,v)=>s+v,0); }
-function updateCartUI(){ if(cartCountEl) cartCountEl.textContent = cartTotal(loadCart()); }
+function updateCartUI(){ if(cartCountEl) cartCountEl.textContent = cartTotal(loadCart()); renderCartPanel(); }
 
-// Render items into each category grid
+// render products (images lazy)
 function renderByCategory(){
   const grids = Array.from(categoryGrids);
   grids.forEach(grid=>{
@@ -100,13 +86,13 @@ function renderByCategory(){
         const card = document.createElement('article');
         card.className = 'card';
         card.innerHTML = `
-          <img src="${p.img}" alt="${p.name}" />
+          <img src="${p.img}" alt="${p.name}" loading="lazy" />
           <h3>${p.name}</h3>
           <p class="desc">${p.desc || ''}</p>
           <p class="meta"><strong>${p.price > 0 ? '₹' + p.price + (p.unit ? ' / ' + p.unit : '') : 'Price on request'}</strong></p>
           <div class="actions">
-            <button class="btn add" data-id="${p.id}">Add</button>
-            <button class="btn buy" data-id="${p.id}">Buy Now</button>
+            <button class="btn small add" data-id="${p.id}">Add</button>
+            <button class="btn primary buy" data-id="${p.id}">Buy Now</button>
           </div>
         `;
         grid.appendChild(card);
@@ -116,15 +102,16 @@ function renderByCategory(){
   attachHandlers();
 }
 
+// handlers for add / buy
 function attachHandlers(){
   document.querySelectorAll('.btn.add').forEach(b=>{
     b.onclick = e=>{
       const id = +e.target.dataset.id;
-      const cart = loadCart();
-      cart[id] = (cart[id]||0) + 1;
-      saveCart(cart);
+      const cart = loadCart(); cart[id] = (cart[id]||0) + 1; saveCart(cart);
       updateCartUI();
       e.target.textContent = 'Added'; setTimeout(()=> e.target.textContent = 'Add',900);
+      // tiny pulse
+      e.target.animate([{transform:'scale(1)'},{transform:'scale(0.96)'},{transform:'scale(1)'}],{duration:220});
     };
   });
 
@@ -137,17 +124,128 @@ function attachHandlers(){
       if(qty === null) return;
       qty = qty.trim();
       if(!qty || isNaN(qty) || Number(qty) <= 0) return alert('Enter valid qty');
-      const total = (Number(p.price)||0) * Number(qty);
-      const ok = confirm(`Proceed to pay ₹${total} for ${qty} ${p.unit} of ${p.name}? (Demo)`);
-      if(ok){
-        alert('Demo payment successful (simulation). Real gateway integration will come next.');
-        const cart = loadCart(); cart[id] = (cart[id]||0) + Number(qty); saveCart(cart); updateCartUI();
-      }
+      const cart = loadCart(); cart[id] = (cart[id]||0) + Number(qty); saveCart(cart);
+      updateCartUI();
+      // open cart panel for review
+      openCartPanel();
     };
   });
 }
 
-// Contact form simple handler
+// ----------------- SLIDE-IN CART PANEL -----------------
+/* render cart into a right panel with qty controls and checkout simulation */
+function ensureCartPanel(){
+  if(document.querySelector('.cart-panel')) return;
+  const panel = document.createElement('aside');
+  panel.className = 'cart-panel';
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3>Your Cart</h3>
+      <button id="cart-close" class="btn">Close</button>
+    </div>
+    <div class="cart-items" id="cart-items"></div>
+    <div class="cart-footer" id="cart-footer">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+        <strong>Total</strong><strong id="cart-total">₹0</strong>
+      </div>
+      <div style="display:flex;gap:.6rem">
+        <button id="checkout-btn" class="btn primary">Checkout (Demo)</button>
+        <button id="clear-cart" class="btn ghost">Clear</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(panel);
+
+  document.getElementById('cart-close').addEventListener('click', closeCartPanel);
+  document.getElementById('clear-cart').addEventListener('click', ()=>{
+    if(!confirm('Clear cart?')) return;
+    saveCart({}); updateCartUI();
+  });
+  document.getElementById('checkout-btn').addEventListener('click', ()=>{
+    const cart = loadCart();
+    if(Object.keys(cart).length === 0) return alert('Cart empty');
+    alert('Demo checkout complete. We will integrate Razorpay later.');
+    saveCart({}); updateCartUI(); closeCartPanel();
+  });
+}
+
+function renderCartPanel(){
+  ensureCartPanel();
+  const itemsWrap = document.getElementById('cart-items');
+  const totalEl = document.getElementById('cart-total');
+  if(!itemsWrap || !totalEl) return;
+  const cart = loadCart();
+  const ids = Object.keys(cart);
+  if(ids.length === 0){
+    itemsWrap.innerHTML = `<p class="empty">Your cart is empty.</p>`;
+    totalEl.textContent = '₹0';
+    return;
+  }
+  let grand = 0;
+  itemsWrap.innerHTML = '';
+  ids.forEach(id=>{
+    const p = products.find(x=>x.id === Number(id));
+    if(!p) return;
+    const qty = cart[id];
+    const lineTotal = (Number(p.price)||0) * qty;
+    if(!isNaN(lineTotal)) grand += lineTotal;
+    const row = document.createElement('div');
+    row.className = 'cart-row';
+    row.innerHTML = `
+      <div style="flex:1">
+        <strong>${p.name}</strong>
+        <div class="muted" style="font-size:.9rem">${p.unit || ''} • ${p.price>0? '₹'+p.price : 'Price on request'}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.4rem">
+        <div class="qty">
+          <button class="qty-minus" data-id="${id}">-</button>
+          <span style="min-width:28px;text-align:center;display:inline-block">${qty}</span>
+          <button class="qty-plus" data-id="${id}">+</button>
+        </div>
+        <div style="font-weight:700">${lineTotal ? '₹'+lineTotal : '—'}</div>
+      </div>
+    `;
+    itemsWrap.appendChild(row);
+  });
+
+  // attach qty handlers
+  itemsWrap.querySelectorAll('.qty-plus').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      const id = +e.target.dataset.id;
+      const cart = loadCart(); cart[id] = (cart[id]||0) + 1; saveCart(cart); renderCartPanel(); updateCartUI();
+    });
+  });
+  itemsWrap.querySelectorAll('.qty-minus').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      const id = +e.target.dataset.id;
+      const cart = loadCart(); cart[id] = (cart[id]||0) - 1; if(cart[id] <= 0) delete cart[id]; saveCart(cart); renderCartPanel(); updateCartUI();
+    });
+  });
+
+  totalEl.textContent = '₹' + grand;
+}
+
+function openCartPanel(){
+  ensureCartPanel();
+  const panel = document.querySelector('.cart-panel');
+  panel.classList.add('open');
+  // trap focus lightly
+  panel.focus();
+}
+function closeCartPanel(){
+  const panel = document.querySelector('.cart-panel');
+  panel.classList.remove('open');
+}
+
+// attach cart button
+function setupCartBtn(){
+  if(!cartBtn) return;
+  cartBtn.addEventListener('click', ()=>{
+    openCartPanel();
+  });
+}
+
+// Contact handler (same)
 function setupContact(){
   const form = document.getElementById('contact-form');
   if(!form) return;
@@ -161,52 +259,60 @@ function setupContact(){
   });
 }
 
-// Cart quick view
-function setupCartBtn(){
-  if(!cartBtn) return;
-  cartBtn.addEventListener('click', ()=>{
-    const cart = loadCart();
-    const lines = Object.keys(cart).map(id=>{
-      const p = products.find(x=>x.id === Number(id)); if(!p) return null;
-      const qty = cart[id]; const total = (Number(p.price)||0) * qty;
-      return `${p.name} — ${qty} ${p.unit || ''} — ${total ? '₹'+total : 'Price on request'}`;
-    }).filter(Boolean);
-    if(lines.length === 0) return alert('Cart empty');
-    alert('Cart:\n\n'+lines.join('\n')+`\n\nTotal items: ${cartTotal(cart)}`);
-  });
-}
-
-// Initialize
+// init
 document.addEventListener('DOMContentLoaded', ()=>{
-  const yearEl = document.getElementById('year'); if(yearEl) yearEl.textContent = new Date().getFullYear();
+  // build category bar (if missing) with contact link
+  if(!document.querySelector('.category-bar')){
+    const catBarWrap = document.createElement('div');
+    catBarWrap.className = 'category-bar';
+    catBarWrap.innerHTML = `<div class="container row"><div class="row">
+      <a href="#sweets">Sweets</a>
+      <a href="#pickles">Pickles</a>
+      <a href="#fried">Fried</a>
+      <a href="#podi">Podi</a>
+      <a href="#contact">Contact</a>
+    </div></div>`;
+    const header = document.querySelector('.site-header');
+    if(header && header.parentNode) header.parentNode.insertBefore(catBarWrap, header.nextSibling);
+  }
+
+  // render and wire up
   renderByCategory();
   updateCartUI();
   setupContact();
   setupCartBtn();
+
+  // hamburger menu toggle (mobile)
+  const hamburger = document.querySelector('.hamburger');
+  if(hamburger){
+    hamburger.addEventListener('click', ()=>{
+      document.querySelector('.main-nav')?.classList.toggle('open');
+      hamburger.classList.toggle('open');
+    });
+  }
+
+  // basic close cart on ESC
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape') closeCartPanel();
+  });
 });
 
 // ===== Improved UI helpers: robust smooth scroll, active highlight, header shrink =====
 (function(){
-  // helper: get header + category heights
   function getTopOffset(){
     const header = document.querySelector('.site-header');
     const cat = document.querySelector('.category-bar');
     let offset = 0;
     if(header) offset += header.getBoundingClientRect().height;
     if(cat) offset += cat.getBoundingClientRect().height;
-    // add small gap
-    return Math.ceil(offset) + 12;
+    return Math.ceil(offset) + 8;
   }
-
-  // smooth scroll for header nav and category links
   function safeScrollTo(selector){
     const target = document.querySelector(selector);
     if(!target) return;
     const top = Math.round(target.getBoundingClientRect().top + window.scrollY) - getTopOffset();
     window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   }
-
-  // attach click handlers (works for elements added later too)
   function attachLinkHandlers(){
     document.querySelectorAll('.main-nav a, .category-bar a').forEach(a=>{
       a.removeEventListener('click', a.__smoothScrollHandler);
@@ -220,72 +326,37 @@ document.addEventListener('DOMContentLoaded', ()=>{
       a.__smoothScrollHandler = handler;
     });
   }
-
-  // build category bar if missing (adds Contact too)
-  if(!document.querySelector('.category-bar')){
-    const catBarWrap = document.createElement('div');
-    catBarWrap.className = 'category-bar';
-    catBarWrap.innerHTML = `<div class="container row"><div class="row">
-      <a href="#sweets">Sweets</a>
-      <a href="#pickles">Pickles</a>
-      <a href="#fried">Fried</a>
-      <a href="#podi">Podi</a>
-      <a href="#contact">Contact</a>
-    </div></div>`;
-    const header = document.querySelector('.site-header');
-    if(header && header.parentNode){
-      header.parentNode.insertBefore(catBarWrap, header.nextSibling);
-    }
-  }
-
-  // active highlight on scroll
   const navLinks = Array.from(document.querySelectorAll('.category-bar a, .main-nav a'));
-  const sections = navLinks.map(l=>{
-    const href = l.getAttribute('href');
-    return href && href.startsWith('#') ? document.querySelector(href) : null;
+  const sections = () => navLinks.map(l=>{
+    const href = l.getAttribute('href'); return href && href.startsWith('#') ? document.querySelector(href) : null;
   });
 
   function onScroll(){
-    // header shrink
-    if(window.scrollY > 30) document.querySelector('.site-header')?.classList.add('shrink');
-    else document.querySelector('.site-header')?.classList.remove('shrink');
-
-    // active link detection
+    if(window.scrollY > 30) document.querySelector('.site-header')?.classList.add('shrink'); else document.querySelector('.site-header')?.classList.remove('shrink');
     const offset = window.scrollY + getTopOffset() + 6;
     let found = false;
-    sections.forEach((sec, i)=>{
+    const secs = sections();
+    secs.forEach((sec, i)=>{
       if(!sec) return;
       const top = sec.offsetTop;
       const bottom = top + sec.offsetHeight;
       if(offset >= top && offset < bottom){
-        navLinks.forEach(x=>x.classList.remove('active'));
-        navLinks[i].classList.add('active');
-        found = true;
+        navLinks.forEach(x=>x.classList.remove('active')); navLinks[i].classList.add('active'); found = true;
       }
     });
     if(!found) navLinks.forEach(x=>x.classList.remove('active'));
   }
 
-  // re-run renderers in case DOM changed
-  function boot(){
-    attachLinkHandlers();
-    onScroll();
-  }
-
   window.addEventListener('scroll', onScroll);
-  window.addEventListener('resize', function(){ setTimeout(onScroll, 120); });
-  // initial boot after slight delay (in case dynamic content inserted)
-  setTimeout(boot, 300);
+  window.addEventListener('resize', ()=> setTimeout(onScroll, 120));
+  setTimeout(()=>{ attachLinkHandlers(); onScroll(); }, 300);
 })();
 
-// ===== WhatsApp order button logic =====
+// ===== WhatsApp order button logic (uses encodeURIComponent) =====
 (function(){
   const waBtn = document.getElementById('whatsapp-btn');
   if(!waBtn) return;
-
-  // Replace with your phone number in international format (no +)
-  const PHONE = '919676401967'; // example: '919812345678'
-
+  const PHONE = '919676401967'; // update if needed
   function cartToMessage(){
     const cart = loadCart();
     const itemLines = Object.keys(cart).map(id=>{
@@ -310,11 +381,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
     ].join('\n');
     return encodeURIComponent(body);
   }
-
   waBtn.addEventListener('click', (e)=>{
     e.preventDefault();
     const msg = cartToMessage();
-    // open WhatsApp Web / App
     const url = `https://wa.me/${PHONE}?text=${msg}`;
     window.open(url, '_blank');
   });
