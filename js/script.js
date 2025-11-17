@@ -102,6 +102,98 @@ function renderByCategory(){
   attachHandlers();
 }
 
+/* ===== Nav hover preview logic ===== */
+(function(){
+  // create preview element once
+  const preview = document.createElement('div');
+  preview.className = 'nav-preview';
+  preview.id = 'nav-preview';
+  preview.innerHTML = '<div id="nav-preview-inner" style="display:flex;gap:.5rem"></div>';
+  document.body.appendChild(preview);
+
+  let showTimer = null;
+  let hideTimer = null;
+
+  function buildPreviewContent(category){
+    const inner = document.getElementById('nav-preview-inner');
+    inner.innerHTML = ''; // reset
+    const list = products.filter(p => p.category && p.category.toLowerCase() === category.toLowerCase());
+    // show up to 6 items
+    const items = list.slice(0,6);
+    items.forEach(p=>{
+      const item = document.createElement('div');
+      item.className = 'preview-item';
+      item.innerHTML = `
+        <img src="${p.img}" alt="${p.name}" loading="lazy" />
+        <div class="meta">
+          <div class="name">${p.name}</div>
+          <div class="price">${p.price > 0 ? '₹'+p.price + (p.unit ? ' / '+p.unit : '') : 'Price on request'}</div>
+        </div>
+      `;
+      inner.appendChild(item);
+    });
+    if(items.length === 0){
+      inner.innerHTML = `<div style="padding:.6rem;color:var(--muted)">No items available</div>`;
+    }
+  }
+
+  // position preview centered under the link (keeps inside viewport)
+  function positionPreview(anchorEl){
+    const rect = anchorEl.getBoundingClientRect();
+    const previewEl = preview;
+    const previewWidth = Math.min(Math.max(260, rect.width * 1.8), 520);
+    previewEl.style.width = previewWidth + 'px';
+    const top = rect.bottom + window.scrollY + 8; // 8px gap
+    let left = rect.left + window.scrollX + (rect.width / 2) - (previewWidth / 2);
+    // clamp inside viewport
+    const minLeft = 8;
+    const maxLeft = window.innerWidth - previewWidth - 8;
+    left = Math.max(minLeft, Math.min(left, maxLeft));
+    previewEl.style.top = top + 'px';
+    previewEl.style.left = left + 'px';
+  }
+
+  function showPreviewFor(anchorEl, category){
+    clearTimeout(hideTimer);
+    clearTimeout(showTimer);
+    showTimer = setTimeout(()=>{
+      buildPreviewContent(category);
+      positionPreview(anchorEl);
+      preview.classList.add('show');
+    }, 120); // slight delay to avoid accidental hover
+  }
+  function hidePreviewSoon(){
+    clearTimeout(showTimer);
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(()=> preview.classList.remove('show'), 180);
+  }
+
+  // attach handlers to nav links (header nav)
+  function attachNavPreview(){
+    const navLinks = Array.from(document.querySelectorAll('.main-nav a, .category-bar a'));
+    navLinks.forEach(a=>{
+      const href = a.getAttribute('href');
+      if(!href || !href.startsWith('#')) return;
+      const cat = href.replace('#','').trim();
+      a.addEventListener('mouseenter', (e)=> showPreviewFor(a, cat) );
+      a.addEventListener('focus', (e)=> showPreviewFor(a, cat) ); // keyboard support
+      a.addEventListener('mouseleave', hidePreviewSoon );
+      a.addEventListener('blur', hidePreviewSoon );
+    });
+
+    // keep preview open while hovered
+    preview.addEventListener('mouseenter', ()=> clearTimeout(hideTimer) );
+    preview.addEventListener('mouseleave', hidePreviewSoon );
+  }
+
+  // call after DOM ready (but safe if called later)
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', attachNavPreview);
+  } else attachNavPreview();
+
+})();
+
+
 // handlers for add / buy
 function attachHandlers(){
   document.querySelectorAll('.btn.add').forEach(b=>{
