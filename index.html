@@ -12,23 +12,34 @@
   <header class="site-header">
     <div class="container header-inner">
       <div class="logo">Srihithas Foods</div>
-      <nav class="main-nav">
+
+      <!-- main navigation -->
+      <nav class="main-nav" role="navigation" aria-label="Main">
         <a href="#sweets">Sweets</a>
         <a href="#pickles">Pickles</a>
         <a href="#fried">Fried</a>
         <a href="#podi">Podi</a>
         <a href="#contact">Contact</a>
       </nav>
-      <div class="header-actions">
-        <button id="cart-btn" class="btn">Cart (<span id="cart-count">0</span>)</button>
-        <button id="menu-toggle" class="hamburger" aria-label="menu">☰</button>
+
+      <div class="header-actions" style="display:flex;align-items:center;gap:.6rem">
+        <button id="cart-btn" class="btn" aria-label="Open cart">Cart (<span id="cart-count">0</span>)</button>
+
+        <!-- hamburger / user menu button (id must match JS) -->
+        <button id="hamburger" class="hamburger" aria-label="Open user menu" aria-controls="user-panel" aria-expanded="false" title="Menu">
+          <svg width="20" height="14" viewBox="0 0 20 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect width="20" height="2" rx="1" fill="#111"/>
+            <rect y="6" width="20" height="2" rx="1" fill="#111"/>
+            <rect y="12" width="20" height="2" rx="1" fill="#111"/>
+          </svg>
+        </button>
       </div>
     </div>
   </header>
 
   <main>
     <section class="hero container">
-      <div>
+      <div class="hero-copy">
         <h1>Authentic Sweets & Local Flavours</h1>
         <p>Freshly made — sweets, pickles, fried snacks, and podi. Call or order online.</p>
         <a href="#sweets" class="btn primary">See Sweets</a>
@@ -76,9 +87,93 @@
     <p>© <span id="year"></span> Srihithas Foods • Follow us on Instagram • Made with ❤</p>
   </footer>
 
-  <script src="js/script.js"></script>
-  <!-- WhatsApp order button (floating) -->
-<a id="whatsapp-btn" class="whatsapp-btn" href="#" aria-label="Order on WhatsApp" title="Order on WhatsApp">💬 Order</a>
+  <!-- ===== User panel (slide-in) ===== -->
+  <aside id="user-panel" class="user-panel" aria-hidden="true">
+    <div class="user-panel-inner">
+      <div class="user-panel-header">
+        <strong id="user-panel-title">Menu</strong>
+        <button id="user-panel-close" class="btn" aria-label="Close menu">Close</button>
+      </div>
 
+      <nav class="user-nav" role="navigation" aria-label="User menu">
+        <ul>
+          <li><button class="user-link" data-view="login">Login</button></li>
+          <li><button class="user-link" data-view="items">Items</button></li>
+          <li><button class="user-link" data-view="orders">My Orders</button></li>
+          <li><button class="user-link" data-view="wishlist">My Wishlist</button></li>
+          <li><button class="user-link" data-view="contact">Contact</button></li>
+          <li><button class="user-link" data-view="track">Track Order</button></li>
+        </ul>
+      </nav>
+
+      <div id="user-panel-content" class="user-panel-content">
+        <!-- login view -->
+        <div class="panel-view" data-view-id="login">
+          <h3>Login</h3>
+          <form id="login-form" class="small-form">
+            <label>Name <input name="name" required /></label>
+            <label>Phone <input name="phone" type="tel" required /></label>
+            <div style="display:flex;gap:.5rem;margin-top:.6rem">
+              <button type="submit" class="btn primary">Sign In (Mock)</button>
+              <button type="button" id="logout-btn" class="btn ghost" style="display:none">Logout</button>
+            </div>
+            <p class="muted" style="margin-top:.6rem;font-size:.9rem">This demo stores a name in your browser only.</p>
+          </form>
+        </div>
+
+        <!-- items view -->
+        <div class="panel-view" data-view-id="items" style="display:none">
+          <h3>Items</h3>
+          <p class="muted">Quick links to categories</p>
+          <div class="mini-links" style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem">
+            <a class="btn ghost" href="#sweets">Sweets</a>
+            <a class="btn ghost" href="#pickles">Pickles</a>
+            <a class="btn ghost" href="#fried">Fried</a>
+            <a class="btn ghost" href="#podi">Podi</a>
+          </div>
+        </div>
+
+        <!-- orders view -->
+        <div class="panel-view" data-view-id="orders" style="display:none">
+          <h3>My Orders</h3>
+          <div id="orders-list" class="muted">No orders yet (demo).</div>
+        </div>
+
+        <!-- wishlist view -->
+        <div class="panel-view" data-view-id="wishlist" style="display:none">
+          <h3>My Wishlist</h3>
+          <div id="wishlist-list" class="muted">No wishlist items yet.</div>
+        </div>
+
+        <!-- contact view inside panel -->
+        <div class="panel-view" data-view-id="contact" style="display:none">
+          <h3>Contact</h3>
+          <form id="user-contact-form" class="small-form">
+            <label>Your Name <input name="name" /></label>
+            <label>Message <textarea name="message" rows="3"></textarea></label>
+            <div style="margin-top:.6rem"><button class="btn primary" type="submit">Send</button></div>
+          </form>
+        </div>
+
+        <!-- track order view -->
+        <div class="panel-view" data-view-id="track" style="display:none">
+          <h3>Track Order</h3>
+          <form id="track-form" class="small-form">
+            <label>Order ID <input name="orderId" /></label>
+            <div style="margin-top:.6rem"><button class="btn primary" type="submit">Track</button></div>
+          </form>
+          <div id="track-result" style="margin-top:.6rem"></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- backdrop -->
+  <div id="user-panel-backdrop" class="user-panel-backdrop" aria-hidden="true"></div>
+
+  <!-- WhatsApp order button (floating) -->
+  <a id="whatsapp-btn" class="whatsapp-btn" href="#" aria-label="Order on WhatsApp" title="Order on WhatsApp">💬 Order</a>
+
+  <script src="js/script.js"></script>
 </body>
 </html>

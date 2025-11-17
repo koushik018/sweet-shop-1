@@ -525,3 +525,165 @@ document.addEventListener('DOMContentLoaded', ()=>{
     window.open(url, '_blank');
   });
 })();
+
+
+/* ===== user panel (hamburger menu + views) ===== */
+(function(){
+  const hamburger = document.getElementById('hamburger');
+  const panel = document.getElementById('user-panel');
+  const closeBtn = document.getElementById('user-panel-close');
+  const backdrop = document.getElementById('user-panel-backdrop');
+  const links = Array.from(document.querySelectorAll('.user-link'));
+  const panelContent = document.getElementById('user-panel-content');
+
+  // quick storage keys
+  const KEY_USER = 'sf_user';
+  const KEY_ORDERS = 'sf_orders';
+  const KEY_WISHLIST = 'sf_wishlist';
+
+  function togglePanel(open){
+    if(open){
+      panel.classList.add('open');
+      backdrop.classList.add('show');
+      hamburger?.classList.add('open');
+      panel.setAttribute('aria-hidden', 'false');
+      hamburger?.setAttribute('aria-expanded','true');
+    } else {
+      panel.classList.remove('open');
+      backdrop.classList.remove('show');
+      hamburger?.classList.remove('open');
+      panel.setAttribute('aria-hidden', 'true');
+      hamburger?.setAttribute('aria-expanded','false');
+    }
+  }
+
+  if(hamburger){
+    hamburger.addEventListener('click', ()=> togglePanel(true));
+  }
+  if(closeBtn) closeBtn.addEventListener('click', ()=> togglePanel(false));
+  if(backdrop) backdrop.addEventListener('click', ()=> togglePanel(false));
+  window.addEventListener('keydown', (e)=> { if(e.key === 'Escape') togglePanel(false); });
+
+  // show view by id
+  function showView(id){
+    const views = panelContent.querySelectorAll('.panel-view');
+    views.forEach(v => v.style.display = v.dataset.viewId === id ? '' : 'none');
+    // focus first input if any
+    const active = panelContent.querySelector(`.panel-view[data-view-id="${id}"]`);
+    if(active) active.querySelector('input,textarea,button')?.focus();
+    // do some view-specific refresh
+    if(id === 'orders') renderOrders();
+    if(id === 'wishlist') renderWishlist();
+    if(id === 'login') refreshLoginState();
+  }
+
+  links.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const view = btn.dataset.view;
+      showView(view);
+    });
+  });
+
+  // LOGIN form (mock)
+  const loginForm = document.getElementById('login-form');
+  const logoutBtn = document.getElementById('logout-btn');
+  function saveUser(u){ localStorage.setItem(KEY_USER, JSON.stringify(u)); }
+  function loadUser(){ try{ return JSON.parse(localStorage.getItem(KEY_USER)); }catch(e){return null;} }
+  function refreshLoginState(){
+    const user = loadUser();
+    if(user){
+      loginForm.name.value = user.name || '';
+      loginForm.phone.value = user.phone || '';
+      logoutBtn.style.display = '';
+    } else {
+      loginForm.reset();
+      logoutBtn.style.display = 'none';
+    }
+  }
+  if(loginForm){
+    loginForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      const name = loginForm.name.value.trim();
+      const phone = loginForm.phone.value.trim();
+      if(!name || !phone) return alert('Please enter name and phone');
+      saveUser({ name, phone });
+      alert('Signed in (demo).');
+      refreshLoginState();
+    });
+  }
+  if(logoutBtn) logoutBtn.addEventListener('click', ()=>{
+    localStorage.removeItem(KEY_USER);
+    refreshLoginState();
+    alert('Signed out.');
+  });
+
+  // ORDERS & WISHLIST render
+  function getOrders(){ try{ return JSON.parse(localStorage.getItem(KEY_ORDERS)) || []; } catch(e){ return []; } }
+  function getWishlist(){ try{ return JSON.parse(localStorage.getItem(KEY_WISHLIST)) || []; } catch(e){ return []; } }
+  function saveOrders(arr){ localStorage.setItem(KEY_ORDERS, JSON.stringify(arr)); }
+  function saveWishlist(arr){ localStorage.setItem(KEY_WISHLIST, JSON.stringify(arr)); }
+
+  function renderOrders(){
+    const el = document.getElementById('orders-list');
+    const orders = getOrders();
+    if(!el) return;
+    if(orders.length === 0) { el.innerHTML = '<div class="muted">No orders yet.</div>'; return; }
+    el.innerHTML = orders.map(o => `<div style="padding:.5rem;border-bottom:1px dashed rgba(0,0,0,0.04)"><strong>Order ${o.id}</strong><div class="muted" style="font-size:.95rem">${o.items.length} items — ₹${o.total}</div></div>`).join('');
+  }
+
+  function renderWishlist(){
+    const el = document.getElementById('wishlist-list');
+    const list = getWishlist();
+    if(!el) return;
+    if(list.length === 0) { el.innerHTML = '<div class="muted">No wishlist items.</div>'; return; }
+    el.innerHTML = list.map(id => {
+      const p = products.find(x=>x.id === Number(id));
+      if(!p) return '';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem;border-bottom:1px dashed rgba(0,0,0,0.04)"><div><strong>${p.name}</strong><div class="muted">${p.price > 0 ? '₹'+p.price : 'Price on request'}</div></div><button class="btn small remove-wl" data-id="${p.id}">Remove</button></div>`;
+    }).join('');
+    // attach remove handlers
+    el.querySelectorAll('.remove-wl').forEach(b=>{
+      b.addEventListener('click', (e)=>{
+        const id = +e.currentTarget.dataset.id;
+        let arr = getWishlist(); arr = arr.filter(x=>x !== id); saveWishlist(arr); renderWishlist();
+      });
+    });
+  }
+
+  // contact in panel
+  const userContactForm = document.getElementById('user-contact-form');
+  if(userContactForm){
+    userContactForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      alert('Thanks! We got your message (demo).');
+      userContactForm.reset();
+    });
+  }
+
+  // track order
+  const trackForm = document.getElementById('track-form');
+  if(trackForm){
+    trackForm.addEventListener('submit', e=>{
+      e.preventDefault();
+      const id = trackForm.orderId?.value?.trim();
+      const res = document.getElementById('track-result');
+      if(!id){ res.textContent = 'Enter order id'; return; }
+      // demo: no real orders. fake status
+      res.innerHTML = `<div class="muted">Order ${id} not found — this is a demo. If it existed, status would appear here.</div>`;
+    });
+  }
+
+  // Quick helper to add item to wishlist from product card (optional)
+  // call addToWishlist(id) from other code if you want quick add
+  window.addToWishlist = function(id){
+    const arr = getWishlist(); if(!arr.includes(id)) arr.push(id); saveWishlist(arr); alert('Added to wishlist (demo)'); 
+  };
+
+  // show default view when opened
+  panel.addEventListener('transitionend', ()=>{
+    if(panel.classList.contains('open')) showView('items');
+  });
+
+  // init view states
+  refreshLoginState();
+})();
