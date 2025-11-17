@@ -70,7 +70,28 @@ const cartBtn = document.getElementById('cart-btn');
 function loadCart(){ try{ const r = localStorage.getItem('sf_cart'); return r ? JSON.parse(r) : {}; }catch(e){return{};} }
 function saveCart(c){ localStorage.setItem('sf_cart', JSON.stringify(c)); }
 function cartTotal(c){ return Object.values(c).reduce((s,v)=>s+v,0); }
-function updateCartUI(){ if(cartCountEl) cartCountEl.textContent = cartTotal(loadCart()); renderCartPanel(); }
+function updateCartUI(){
+  if(cartCountEl) cartCountEl.textContent = cartTotal(loadCart());
+  renderCartPanel();
+  refreshAddButtons();   // <- ensures button labels reflect cart
+}
+
+
+// update all Add buttons to reflect current cart quantities
+function refreshAddButtons(){
+  const cart = loadCart();
+  document.querySelectorAll('.btn.add').forEach(btn => {
+    const id = +btn.dataset.id;
+    const qty = cart[id] || 0;
+    if(qty > 0){
+      btn.textContent = `Qty: ${qty}`;
+      btn.classList.add('added');
+    } else {
+      btn.textContent = 'Add';
+      btn.classList.remove('added');
+    }
+  });
+}
 
 // render products (images lazy)
 function renderByCategory(){
@@ -213,34 +234,51 @@ function renderByCategory(){
 })();
 
 
-// handlers for add / buy
 function attachHandlers(){
+  // Add buttons
   document.querySelectorAll('.btn.add').forEach(b=>{
-    b.onclick = e=>{
-      const id = +e.target.dataset.id;
-      const cart = loadCart(); cart[id] = (cart[id]||0) + 1; saveCart(cart);
-      updateCartUI();
-      e.target.textContent = 'Added'; setTimeout(()=> e.target.textContent = 'Add',900);
-      // tiny pulse
-      e.target.animate([{transform:'scale(1)'},{transform:'scale(0.96)'},{transform:'scale(1)'}],{duration:220});
-    };
+    // remove previously attached handlers (safety)
+    b.replaceWith(b.cloneNode(true));
+  });
+
+  // re-select after cloning
+  document.querySelectorAll('.btn.add').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const id = +e.currentTarget.dataset.id;
+      const cart = loadCart();
+      cart[id] = (cart[id] || 0) + 1;
+      saveCart(cart);
+      updateCartUI();         // will call refreshAddButtons()
+      // tiny pulse for feedback
+      e.currentTarget.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.96)' }, { transform: 'scale(1)' }], { duration: 220 });
+    });
+  });
+
+  // Buy buttons
+  // remove old handlers then attach fresh
+  document.querySelectorAll('.btn.buy').forEach(b=>{
+    b.replaceWith(b.cloneNode(true));
   });
 
   document.querySelectorAll('.btn.buy').forEach(b=>{
-    b.onclick = e=>{
-      const id = +e.target.dataset.id;
+    b.addEventListener('click', e=>{
+      const id = +e.currentTarget.dataset.id;
       const p = products.find(x=>x.id===id);
       if(!p) return alert('Product not found');
       let qty = prompt(`Buy ${p.name}\nEnter quantity (${p.unit || 'unit'}):`, "1");
       if(qty === null) return;
       qty = qty.trim();
       if(!qty || isNaN(qty) || Number(qty) <= 0) return alert('Enter valid qty');
-      const cart = loadCart(); cart[id] = (cart[id]||0) + Number(qty); saveCart(cart);
+      const cart = loadCart();
+      cart[id] = (cart[id] || 0) + Number(qty);
+      saveCart(cart);
       updateCartUI();
-      // open cart panel for review
-      openCartPanel();
-    };
+      openCartPanel(); // optional: open cart to review
+    });
   });
+
+  // After handlers attached, make sure Add buttons show correct qty
+  refreshAddButtons();
 }
 
 // ----------------- SLIDE-IN CART PANEL -----------------

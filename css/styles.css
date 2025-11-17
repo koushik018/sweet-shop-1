@@ -323,3 +323,11 @@ body{
   }
   .nav-preview .preview-item{ min-width:100px; max-width:48%; }
 }
+
+/* Add button when item present */
+.btn.add.added{
+  background: linear-gradient(135deg, #fff, #fffaf7);
+  border: 1px solid rgba(0,0,0,0.06);
+  color: #2b2b2b;
+  font-weight:700;
+}
